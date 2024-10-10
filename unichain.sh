@@ -94,16 +94,18 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-show "Deploying the contract to Unichain..." "progress"
-DEPLOY_OUTPUT=$(forge create "$SCRIPT_DIR/src/$CONTRACT_NAME.sol:$CONTRACT_NAME" \
-    --rpc-url unichain \
-    --private-key "$PRIVATE_KEY")
+# Loop to deploy the contract 500 times
+for i in {1..500}; do
+    show "Deploying the contract to Unichain... (Deployment #$i)" "progress"
+    DEPLOY_OUTPUT=$(forge create "$SCRIPT_DIR/src/$CONTRACT_NAME.sol:$CONTRACT_NAME" \
+        --rpc-url unichain \
+        --private-key "$PRIVATE_KEY")
 
-if [[ $? -ne 0 ]]; then
-    show "Deployment failed." "error"
-    exit 1
-fi
+    if [[ $? -ne 0 ]]; then
+        show "Deployment #$i failed." "error"
+        continue  # Continue to the next iteration if deployment fails
+    fi
 
-
-CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Deployed to: \K(0x[a-fA-F0-9]{40})')
-show "Token deployed successfully at address: https://sepolia.uniscan.xyz/address/$CONTRACT_ADDRESS"
+    CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Deployed to: \K(0x[a-fA-F0-9]{40})')
+    show "Token deployed successfully at address: https://sepolia.uniscan.xyz/address/$CONTRACT_ADDRESS" "success"
+done
