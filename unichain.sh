@@ -94,9 +94,19 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-# Loop to deploy the contract 500 times
-for i in {1..500}; do
+# Ask the user how many times to deploy
+read -p "Enter the number of times to deploy the contract: " DEPLOY_COUNT
+
+# Validate input to ensure it's a number
+if ! [[ "$DEPLOY_COUNT" =~ ^[0-9]+$ ]]; then
+    show "Invalid input. Please enter a positive integer." "error"
+    exit 1
+fi
+
+# Loop to deploy the contract specified times
+for i in $(seq 1 "$DEPLOY_COUNT"); do
     show "Deploying the contract to Unichain... (Deployment #$i)" "progress"
+    
     DEPLOY_OUTPUT=$(forge create "$SCRIPT_DIR/src/$CONTRACT_NAME.sol:$CONTRACT_NAME" \
         --rpc-url unichain \
         --private-key "$PRIVATE_KEY")
@@ -109,3 +119,5 @@ for i in {1..500}; do
     CONTRACT_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Deployed to: \K(0x[a-fA-F0-9]{40})')
     show "Token deployed successfully at address: https://sepolia.uniscan.xyz/address/$CONTRACT_ADDRESS" "success"
 done
+
+show "All deployments completed."
